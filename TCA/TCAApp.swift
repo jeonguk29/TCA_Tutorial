@@ -1,11 +1,13 @@
 import SwiftUI
 import SwiftData
+import ComposableArchitecture
 
 @main
 struct AppStoreApp: App {
     var body: some Scene {
         WindowGroup {
-            MyPageView()
+            // 리듀서로 이 스토어를 만듬
+            MyPageView(store: Store(initialState: MyPageReducer.State(), reducer: {MyPageReducer() }))
         }
         .modelContainer(modelContainer)
     }

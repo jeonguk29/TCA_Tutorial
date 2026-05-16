@@ -30,6 +30,8 @@ enum MyPagePath: CaseIterable {
 
 struct MyPageView: View {
     
+    // store에 대한 변경 감지, 이렇게 하게 되면 외부에서 주입을 받아야함 
+    @Bindable var store: StoreOf<MyPageReducer>
     @Query var users: [User]
     
     var firstUser: User? {
@@ -45,6 +47,10 @@ struct MyPageView: View {
                     listItem(option: option)
                 }
             }
+        }
+        .onAppear {
+            guard let firstUser else { return }
+            store.send(.onAppear(firstUser))
         }
     }
     
@@ -70,8 +76,4 @@ struct MyPageView: View {
         .clipShape(RoundedRectangle(cornerRadius: 8))
 
     }
-}
-
-#Preview {
-    MyPageView()
 }
