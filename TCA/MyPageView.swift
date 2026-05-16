@@ -8,6 +8,7 @@
 import SwiftUI
 import ComposableArchitecture
 import Alamofire
+import SwiftData
 
 // 이름 변경, 이메일 변경, 이미지 변경
 enum MyPagePath: CaseIterable {
@@ -28,10 +29,18 @@ enum MyPagePath: CaseIterable {
 }
 
 struct MyPageView: View {
+    
+    @Query var users: [User]
+    
+    var firstUser: User? {
+        users.first
+    }
+    
     var body: some View {
-        ZStack{
+       
+        ZStack {
             Color.black.ignoresSafeArea()
-            VStack{
+            VStack {
                 ForEach(MyPagePath.allCases, id: \.self) { option in
                     listItem(option: option)
                 }
@@ -41,14 +50,14 @@ struct MyPageView: View {
     
     func listItem(option: MyPagePath) -> some View {
         Button {
-            // Todo: 버튼클릭액션
+            //TODO: 버튼 클릭 액션
         } label: {
-            HStack{
+            HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(option.title)
                         .foregroundStyle(.white)
                         .font(.system(size: 18, weight: .bold))
-                    Text("유저 정보")
+                    Text(firstUser?.name ?? "")
                         .foregroundStyle(Color(UIColor.lightGray))
                         .font(.system(size: 16))
                 }
