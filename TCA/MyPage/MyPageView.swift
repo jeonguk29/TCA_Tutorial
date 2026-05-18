@@ -11,7 +11,7 @@ import Alamofire
 import SwiftData
 
 // 이름 변경, 이메일 변경, 이미지 변경
-enum MyPagePath: CaseIterable {
+enum MyPageOption: CaseIterable {
     case name
     case email
     case image
@@ -39,24 +39,42 @@ struct MyPageView: View {
     }
     
     var body: some View {
-       
-        ZStack {
-            Color.black.ignoresSafeArea()
-            VStack {
-                ForEach(MyPagePath.allCases, id: \.self) { option in
-                    listItem(option: option)
+        NavigationStackStore(store.scope(state: \.path, action: \.path)) {
+            ZStack {
+                Color.black.ignoresSafeArea()
+                VStack {
+                    ForEach(MyPageOption.allCases, id: \.self) { option in
+                        listItem(option: option)
+                    }
+                }
+            }
+            .onAppear {
+                guard let firstUser else { return }
+                store.send(.onAppear(firstUser))
+            }
+        } destination: { store in // 변경이 일어나면 state을 통해서 페이지 이동 및 상태값 주입
+            switch store.state {
+            case let .name(state):
+                // NavigationStackStore 안에 하위 스코프에 접근해서 스코프를 가져와 연결
+                if let store = store.scope(state: \.name, action: \.name) {
+                    EditNameView(store: store)
+                }
+            case let .email(state):
+                if let store = store.scope(state: \.name, action: \.name) {
+                    EditNameView(store: store)
+                }
+            case let .image(state):
+                if let store = store.scope(state: \.name, action: \.name) {
+                    EditNameView(store: store)
                 }
             }
         }
-        .onAppear {
-            guard let firstUser else { return }
-            store.send(.onAppear(firstUser))
-        }
     }
     
-    func listItem(option: MyPagePath) -> some View {
+    func listItem(option: MyPageOption) -> some View {
         Button {
             //TODO: 버튼 클릭 액션
+            store.send(.tapOtion(option))
         } label: {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {

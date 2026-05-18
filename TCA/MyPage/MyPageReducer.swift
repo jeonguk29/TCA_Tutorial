@@ -11,6 +11,7 @@ import ComposableArchitecture
 struct MyPageStackReducer {
     @ObservableState
     
+    // MARK: - 스택 네비게이션에 필요한 구성을 한번쯤 생각해봐야함
     enum State {
         case name(EditNameReducer.State) // 이름 변경 페이지 리듀서 상태
         case email(EditEmailReducer.State) // 이메일 변경 페이지 리듀서 상태
@@ -52,6 +53,7 @@ struct MyPageReducer {
     enum Action {
         case onAppear(User)
         case path(StackActionOf<MyPageStackReducer>)
+        case tapOtion(MyPageOption)
     }
     
     // 엑션을 받아 상태를 변화 시키고 이팩트를 반환할 순수함수
@@ -63,10 +65,21 @@ struct MyPageReducer {
                 state.userName = user.name
                 state.userEmail = user.email
                 return Effect.none
+            case let .tapOtion(option): // 2. 스텍을 통한 화면 이동 처리 부분
+                switch option {
+                case .name:
+                    //  state.path 는 MyPageStackReducer state를 말함
+                    state.path.append(.name(.init(name: state.userName)))
+                case .email:
+                    state.path.append(.email(.init(email: state.userEmail)))
+                case .image:
+                    state.path.append(.image(.init()))
+                }
+                return Effect.none
             case let .path(stackAction): // 각각 하위 리듀서에서 액션이 일어날때 상위 MyPageStackReducer에서 다 감지가 가능함
-                return .none // 부모 리듀서에서 처리할 로직은 여기서 다 하면 된다.
+                return Effect .none // 부모 리듀서에서 처리할 로직은 여기서 다 하면 된다.
             }
-        }// 부모에서 관리하고 있는 모든 내비게이션 스택 스코프를 다 한번에 관리할 수 있도록 함
+        }// 1. 부모에서 관리하고 있는 모든 내비게이션 스택 스코프를 다 한번에 관리할 수 있도록 함 - 부모 리듀서 셋팅 과정
         .forEach(\.path, action: \.path) {
             MyPageStackReducer()
         }
