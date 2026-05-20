@@ -7,6 +7,7 @@
 
 import ComposableArchitecture
 import SwiftUI
+import SwiftData
 
 @Reducer
 struct EditNameReducer {
@@ -18,6 +19,26 @@ struct EditNameReducer {
     enum Action {
         case inputName(String)
         case clearText
+        case onEditFail(String)
+        case onEditSuccess(String)
+    }
+    
+    var body: some Reducer<State, Action> {
+        Reduce { state, action in
+            switch action {
+            case let .inputName(name):
+                state.name = name
+                return .none
+            case .clearText:
+                state.name = ""
+                return .none
+            case let .onEditFail(message):
+                // Todo: alert
+                return .none
+            case .onEditSuccess:
+                return .none
+            }
+        }
     }
 }
 
@@ -25,6 +46,13 @@ struct EditNameView: View {
     
     // MARK: - 리듀서 연결
     @Bindable var store: StoreOf<EditNameReducer>
+    @Environment(\.modelContext) private var context
+    @Query private var users: [User]
+    
+    private var user: User? {
+        users.first
+    }
+    
     var body: some View {
         VStack{
             Text("이름을 입력해 주세요")
@@ -53,7 +81,7 @@ struct EditNameView: View {
                 .background(Color(.systemGray6))
                 .cornerRadius(8)
                 .onSubmit {
-                    
+                    editName(name: store.name)
                 }
         }
         .padding(20)
@@ -61,10 +89,27 @@ struct EditNameView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     //submit
+                    editName(name: store.name)
                 } label: {
                     Text("저장 ")
                 }
             }
+        }
+    }
+    
+    func editName(name: String) {
+        guard !name.isEmpty else {
+            store.send(.onEditFail("이름을 입력해주세요"))
+            return
+        }
+        
+        user?.name = name
+        
+        do {
+            try context.save()
+            store.send(.onEditSuccess(name))
+        } catch {
+            store.send(.onEditFail(error.localizedDescription))
         }
     }
 }
