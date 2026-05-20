@@ -60,12 +60,12 @@ struct MyPageView: View {
                     EditNameView(store: store)
                 }
             case let .email(state):
-                if let store = store.scope(state: \.name, action: \.name) {
-                    EditNameView(store: store)
+                if let store = store.scope(state: \.email, action: \.email) {
+                    EditEmailView(store: store)
                 }
             case let .image(state):
-                if let store = store.scope(state: \.name, action: \.name) {
-                    EditNameView(store: store)
+                if let store = store.scope(state: \.image, action: \.image) {
+                    EditImageView(store: store)
                 }
             }
         }
@@ -92,6 +92,5 @@ struct MyPageView: View {
         }
         .background(Color(UIColor.darkGray))
         .clipShape(RoundedRectangle(cornerRadius: 8))
-
     }
 }
