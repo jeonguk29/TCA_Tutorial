@@ -44,7 +44,12 @@ struct MyPageView: View {
                 Color.black.ignoresSafeArea()
                 VStack {
                     ForEach(MyPageOption.allCases, id: \.self) { option in
-                        listItem(option: option)
+                        let subtitle = switch option {
+                        case .name: store.userName
+                        case .email: store.userEmail
+                        case .image: ""
+                        }
+                        listItem(option: option, subtitle: subtitle)
                     }
                 }
             }
@@ -71,7 +76,7 @@ struct MyPageView: View {
         }
     }
     
-    func listItem(option: MyPageOption) -> some View {
+    func listItem(option: MyPageOption, subtitle: String) -> some View {
         Button {
             //TODO: 버튼 클릭 액션
             store.send(.tapOtion(option))
@@ -81,7 +86,7 @@ struct MyPageView: View {
                     Text(option.title)
                         .foregroundStyle(.white)
                         .font(.system(size: 18, weight: .bold))
-                    Text(firstUser?.name ?? "")
+                    Text(subtitle)
                         .foregroundStyle(Color(UIColor.lightGray))
                         .font(.system(size: 16))
                 }

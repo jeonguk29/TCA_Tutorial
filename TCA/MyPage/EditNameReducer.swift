@@ -127,7 +127,7 @@ struct EditNameView: View {
                     //submit
                     editName(name: store.name)
                 } label: {
-                    Text("저장 ")
+                    Text("저장")
                 }
             }
         }
