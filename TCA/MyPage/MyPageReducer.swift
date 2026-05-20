@@ -77,6 +77,20 @@ struct MyPageReducer {
                 }
                 return Effect.none
             case let .path(stackAction): // 각각 하위 리듀서에서 액션이 일어날때 상위 MyPageStackReducer에서 다 감지가 가능함
+                switch stackAction {
+                case let .element(id, action):
+                    switch action {
+                        // 이름 수정후 팝 되면서 변경됨
+                    case let .name(.onEditSuccess(name)):
+                        state.userName = name
+                        state.path.pop(from: id)
+                    default: return .none
+                    }
+                default: return .none
+                }
+                
+                // ⭐️ 엘리먼트 사용하면 하위 리듀서액션을 쉽게 받아올 수 있음
+                
                 return Effect .none // 부모 리듀서에서 처리할 로직은 여기서 다 하면 된다.
             }
         }// 1. 부모에서 관리하고 있는 모든 내비게이션 스택 스코프를 다 한번에 관리할 수 있도록 함 - 부모 리듀서 셋팅 과정

@@ -9,22 +9,38 @@ import ComposableArchitecture
 import SwiftUI
 import SwiftData
 
+
 @Reducer
 struct EditNameReducer {
     
     @ObservableState
     struct State {
         var name: String
+        
+        // nil이면 사라짐, nil 아니면 뜸 - 트리 기반
+        @Presents var alert: AlertState<Action.AlertAction>?
+        
+        enum AlertAction {
+            
+        }
     }
+    
     enum Action {
         case inputName(String)
         case clearText
         case onEditFail(String)
         case onEditSuccess(String)
+        case showAlert(String)
+        case alert(PresentationAction<AlertAction>)
+        
+        enum AlertAction {
+            // alert action 정의해서 사용
+        }
     }
     
     var body: some Reducer<State, Action> {
         Reduce { state, action in
+           
             switch action {
             case let .inputName(name):
                 state.name = name
@@ -33,12 +49,35 @@ struct EditNameReducer {
                 state.name = ""
                 return .none
             case let .onEditFail(message):
-                // Todo: alert
+                //TODO: alert
+                return .send(.showAlert(message)) // 아래 액션 바로 호출
+            case let .showAlert(message):
+                // 1. TCA에서 제공해주는 기능 메시지만 제공하면 간단하게 알랏 구현 가능 nil이 아니면 뜨기 때문에 초기화
+                state.alert = .init(title: {
+                    TextState("에러")
+                }, actions: {
+                    ButtonState {
+                        TextState("확인")
+                    }
+                }, message: {
+                    TextState("에러가 발생했습니다 \(message)")
+                })
                 return .none
             case .onEditSuccess:
                 return .none
+            case let .alert(presentationAction):
+                // 2. nil이면 알랏 사라지기 때문에 nil로 처리
+                switch presentationAction {
+                case .dismiss:
+                    state.alert = nil
+                    return .none
+                case let .presented(action):
+                    //TODO action 처리
+                    return .none
+                }
             }
         }
+        .ifLet(\.$alert, action: \.alert) // 3. 이게 꼭 필요
     }
 }
 
@@ -85,6 +124,7 @@ struct EditNameView: View {
                 }
         }
         .padding(20)
+        .alert($store.scope(state: \.alert, action: \.alert)) // 4. 뷰에다 저장 시키기
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
