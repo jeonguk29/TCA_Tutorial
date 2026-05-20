@@ -19,10 +19,6 @@ struct EditNameReducer {
         
         // nil이면 사라짐, nil 아니면 뜸 - 트리 기반
         @Presents var alert: AlertState<Action.AlertAction>?
-        
-        enum AlertAction {
-            
-        }
     }
     
     enum Action {
