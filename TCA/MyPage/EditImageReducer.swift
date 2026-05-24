@@ -15,44 +15,171 @@ struct EditImageReducer {
     
     @ObservableState
     struct State {
-        @Presents var alert: AlertState<Action>?
-    }
-    enum Action {
-        case onAppear
-        case authResult(Bool)
+        var userImage: Image?
+        var assets: [PHAsset] = []
+        
+        // nil이면 사라짐, nil 아니면 뜸 - 트리 기반
+        @Presents var alert: AlertState<Action.AlertAction>?
     }
     
-    var body: some Reducer<State, Action> {
+    enum Action {
+        case onAppear(image: Data?)
+        case setUserImageData(Data?)
+        case setUserImage(Image)
+        case authResult(Bool)
+        
+        // alert에서 발생하는 액션을 Reducer가 받을 수 있게 하는 통로
+        case alert(PresentationAction<AlertAction>)
+        
+        enum AlertAction {
+            // alert action 정의해서 사용
+        }
+    }
+    
+    var body: some Reducer<State, Action>  {
         Reduce { state, action in
             switch action  {
-            case .onAppear:
+            case let .onAppear(imageData):
                 // 비동기 함수 사용할때는 Effect.run 라는 Effect 사용을 해야함
                 // Reducer는 항상 액션을 받으면 Effect를 리턴해야함
                 return Effect.run { send in
                     let isAuth = await PhotoManager.requestAuthorization()
                     await send(.authResult(isAuth))
+                    await send(.setUserImageData(imageData))
                 }
+                
             case let .authResult(isAuth):
-                if isAuth { // 권한 하용이면 이미지 가져오기
+                if isAuth { // 권한 허용이면 이미지 가져오기
                     let assets = PhotoManager.getAssets()
+                    state.assets = assets
                 } else {
-                    state.alert = AlertState.createAlert(type: .error(message: "권한이 없습니다"))
+                    state.alert = AlertState.createAlert(
+                        type: .error(message: "권한이 없습니다")
+                    )
                 }
                 return .none
-            }
             
-            return .none
+                // Data 타입을 받아서 Image 타입으로 변환하여 저장을 위한 액션으로 전달
+            case let .setUserImageData(data):
+                guard let data, let uiImage = UIImage(data: data) else {
+                    return .none
+                }
+                
+                return .send(.setUserImage(Image(uiImage: uiImage)))
+                
+            case let .setUserImage(image):
+                state.userImage = image
+                return .none
+                
+            case let .alert(presentationAction):
+                switch presentationAction {
+                case .dismiss:
+                    state.alert = nil
+                    return .none
+                    
+                case let .presented(action):
+                    // TODO: alert action 처리
+                    return .none
+                }
+            }
         }
+        .ifLet(\.$alert, action: \.alert)
     }
 }
 
 struct EditImageView: View {
+    
     @Bindable var store: StoreOf<EditImageReducer>
-
+    
+    let columns: [GridItem] = .init(
+        repeating: .init(.flexible()),
+        count: 3
+    )
+    
+    @Query private var users: [User]
+    
+    private var user: User? {
+        users.first
+    }
+    
     var body: some View {
-       Text("EditImageView")
-            .onAppear {
-                store.send(.onAppear)
+        ScrollView {
+            VStack {
+                Text("선택된 이미지")
+                
+                // 선택된 이미지
+                // 묶어서 속성 적용을 위해 Group으로 감쌓아줌
+                Group {
+                    if let image = store.userImage {
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    } else {
+                        Color.gray.opacity(0.2)
+                    }
+                }
+                .frame(width: 100, height: 100)
+                .clipped()
+                .cornerRadius(8)
             }
+            
+            LazyVGrid(columns: columns, spacing: 10) {
+                
+                // PHAsset 안에 localIdentifier가 있어서 이걸 그대로 사용
+                ForEach(store.assets, id: \.localIdentifier) { asset in
+                    AssetImageView(asset: asset, isSelected: false) { data in
+                        // TODO: onTap
+                        store.send(.setUserImageData(data))
+                    }
+                    .clipped()
+                    .cornerRadius(8)
+                }
+            }
+            .padding(8)
+        }
+        .alert($store.scope(state: \.alert, action: \.alert))
+        .onAppear {
+            store.send(.onAppear(image: user?.imageData))
+        }
+    }
+}
+
+private struct AssetImageView: View {
+    
+    let asset: PHAsset
+    let isSelected: Bool
+    let onTap: (Data) -> Void // 선택값을 전달하기 위함
+    
+    let imageWidth = (UIScreen.main.bounds.width - 16 - 20) / 3
+    @State private var image: UIImage? = nil
+    
+    var body: some View {
+        Group {
+            if let image = image {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .onTapGesture(perform: {
+                        if let data = image.jpegData(compressionQuality: 1.0) {
+                            onTap(data)
+                        }
+                    })
+            } else {
+                Color.gray.opacity(0.2)
+            }
+        }
+        .frame(width: imageWidth, height: imageWidth)
+        .overlay(alignment: .topTrailing) {
+            if isSelected {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+                    .frame(width: 20, height: 20)
+            }
+        }
+        .onAppear {
+            PhotoManager.fetchImage(asset: asset) { uiImage in
+                image = uiImage
+            }
+        }
     }
 }
