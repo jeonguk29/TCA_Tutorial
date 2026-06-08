@@ -7,14 +7,15 @@ struct AppStoreApp: App {
     var body: some Scene {
         WindowGroup {
             // 리듀서로 이 스토어를 만듬
-            MyPageView(store: Store(initialState: MyPageReducer.State(), reducer: {MyPageReducer() }))
+           // MyPageView(store: Store(initialState: MyPageReducer.State(), reducer: {MyPageReducer() }))
+            SearchView(store: Store(initialState: SearchReducer.State(), reducer: {SearchReducer() }))
         }
         .modelContainer(modelContainer)
     }
 }
 
 private var modelContainer: ModelContainer = {
-    let schema = Schema([User.self])
+    let schema = Schema([User.self, Keyword.self])
     
     let modelConfigutaion = ModelConfiguration(schema: schema)
     
