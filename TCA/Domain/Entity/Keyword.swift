@@ -11,10 +11,10 @@ import Foundation
 @Model
 final class Keyword: Identifiable {
     var title: String
-    var data: Date
+    var date: Date
     
     init (title: String, data: Date) {
         self.title = title
-        self.data = data
+        self.date = data
     }
 }
