@@ -25,7 +25,46 @@ struct SearchView: View {
                     contentView
                 }
             }
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Text("검색")
+                        .font(.title)
+                }
+
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        store.send(.onTapMyPage)
+                    } label: {
+                        Image(systemName: "gearshape.fill")
+                            .foregroundStyle(.black)
+                    }
+                }
+            }
         }
+        // SwiftUI 기본 .sheet(item:)은 item이 옵셔널 Identifiable일 때, 값이 있으면 시트를 띄우고 nil이면 닫음.
+        // 여기서는 그 item 자리에 store.scope(...)를 넘겨 "자식 화면 전용 스토어"를 만들어 주입함.
+        //  - state: \.myPage  -> 부모 상태 중 myPage(옵셔널) 부분을 자식 상태로 떼어냄
+        //  - action: \.myPage -> 자식에서 발생한 액션을 부모의 .myPage 액션으로 다시 감싸 전달
+        // 즉 myPage 상태가 nil→값으로 바뀌면 시트가 뜨고($store.scope가 자식 StoreOf<MyPageReducer>를 만들어줌),
+        // 닫히면 dismiss가 부모로 전달되어 myPage가 nil이 되며 시트가 사라짐.
+        .sheet(
+            item: $store.scope(
+                state: \.myPage,
+                action: \.myPage
+            )
+        ) { store in
+            MyPageView(store: store)
+        }
+
+    // .fullScreenCover도 사용법은 동일. 시트 대신 전체 화면으로 띄우고 싶을 때 위 .sheet 대신 쓰면 됨.
+    //    .fullScreenCover(
+    //        item: $store.scope(
+    //            state: \.myPage,
+    //            action: \.myPage
+    //        )
+    //    ) { store in
+    //        MyPageView(store: store)
+    //    }
     }
     
     private var textField: some View {
