@@ -59,7 +59,7 @@ struct SearchView: View {
     }
     
     private var contentView: some View {
-        ForEach(keywords, id: \.id) { keyword in 
+        ForEach(keywords, id: \.id) { keyword in
             HStack {
                 HStack {
                     Image(systemName: "magnifyingglass")
@@ -78,6 +78,7 @@ struct SearchView: View {
                 
                 Button {
                     // TODO delete keyword
+                    deleteKeyword(keyword: keyword)
                 } label: {
                     Image(systemName: "xmark")
                         .foregroundStyle(.black)
@@ -90,6 +91,16 @@ struct SearchView: View {
     func saveKeyword(keyword: String) {
         let data = Keyword(title: keyword, data: Date.now)
         context.insert(data)
+        try? context.save()
+    }
+    
+    func deleteKeyword(keyword: Keyword) {
+//        let descriptor = FetchDescriptor<Keyword>(predicate: #Predicate { $0.title == keyword })
+//        if let model = try? context.fetch(descriptor).first {
+//            context.delete(model)
+//        }
+        
+        context.delete(keyword)
         try? context.save()
     }
 }
