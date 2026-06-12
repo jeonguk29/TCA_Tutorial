@@ -15,13 +15,16 @@ struct SearchReducer {
         var keyword: String = ""
         
         @Presents var myPage: MyPageReducer.State?
+        var result: SearchResultReducer.State?
     }
     
     enum Action {
         case inputText(String)
         case clearText
         case onTapMyPage
+        case onSubmit
         case myPage(PresentationAction<MyPageReducer.Action>)
+        case result(SearchResultReducer.Action)
     }
     
     var body: some Reducer<State, Action> {
@@ -34,10 +37,17 @@ struct SearchReducer {
             case .clearText:
                 state.keyword = ""
                 return .none
+            case .onSubmit:
+                state.result = .init()
+                return .none
             case .onTapMyPage:
                 // myPage 상태에 값을 넣으면(@Presents) MyPage 화면이 "표시됨" 상태가 됨. (nil이면 닫힘)
                 state.myPage = .init()
                 return .none
+            case .result(let resultAction):
+                switch resultAction {
+                    
+                }
 
             // 자식(MyPage) 화면에서 일어나는 액션이 PresentationAction으로 감싸져 부모(Search)로 전달됨.
             // 즉 Search가 MyPage의 상위 리듀서가 되어, 자식의 액션을 부모에서 가로채 처리할 수 있음.
@@ -64,6 +74,9 @@ struct SearchReducer {
         // - dismiss 액션을 받으면 myPage를 자동으로 nil 처리(화면 닫기)까지 해줌
         .ifLet(\.$myPage, action: \.myPage) {
             MyPageReducer()
+        }
+        .ifLet(\.result, action: \.result) { 
+            SearchResultReducer()
         }
     }
 }

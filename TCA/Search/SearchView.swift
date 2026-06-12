@@ -92,12 +92,27 @@ struct SearchView: View {
                 // 키워드 저장
                 // 검색
                 saveKeyword(keyword: store.keyword)
-                print("keyword: \(keywords.first?.title)")
+                store.send(.onSubmit)
             }
             .padding(20)
     }
     
     private var contentView: some View {
+        
+        // 분기
+        Group {
+            // 스토어가 생기면 해당 코드 블럭을 탐
+            if let store = store.scope(state: \.result, action: \.result) {
+                // 2. 검색 결과 리스트
+                SearchResultView()
+            } else {
+                // 1. 키워드 리스트
+                keywordList
+            }
+        }
+    }
+    
+    var keywordList: some View {
         ForEach(keywords, id: \.id) { keyword in
             HStack {
                 HStack {
