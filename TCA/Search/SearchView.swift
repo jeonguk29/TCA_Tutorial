@@ -128,6 +128,7 @@ struct SearchView: View {
                 }
                 .onTapGesture {
                     // TODO: 검색
+                    store.send(.onTapKeyword(keyword.title))
                 }
                 
                 Button {
